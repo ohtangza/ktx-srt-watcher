@@ -1114,7 +1114,7 @@ class TestAutoReserve:
         )
         assert korail.reserve_calls == []
 
-    def test_auto_reserve_skipped_for_already_notified(self):
+    def test_armed_auto_reserve_retries_already_notified_train(self):
         cfg = {"version": 1, "watches": [_watch_dict(id="w", auto_reserve=True)]}
         korail = FakeProvider("korail", search_results=[_train(raw_id="r1")])
         s = {"last_run": None, "watches": {"w": {"last_check": None, "notified_train_ids": ["r1"]}}}
@@ -1125,7 +1125,7 @@ class TestAutoReserve:
             notify_fn=NotifyRecorder(),
             now_iso="t",
         )
-        assert korail.reserve_calls == []
+        assert len(korail.reserve_calls) == 1
 
     def test_reserve_failure_calls_failure_notify_and_continues(self):
         cfg = {"version": 1, "watches": [_watch_dict(id="w", auto_reserve=True), _watch_dict(id="w2", auto_reserve=False, date="2026-05-16")]}

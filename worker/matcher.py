@@ -23,6 +23,10 @@ def find_new_trains(
 
 
 def _matches(train: Train, watch: Watch) -> bool:
+    if watch.allowed_departures and train.dep_time not in watch.allowed_departures:
+        return False
+    if watch.allowed_train_nos and train.train_no not in watch.allowed_train_nos:
+        return False
     if train.date != watch.date:
         return False
     if train.train_type not in watch.train_types:

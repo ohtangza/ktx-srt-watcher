@@ -335,20 +335,22 @@ def _process_watch(
     # still record notified_train_ids so turning the toggle back off resumes
     # normal dedup cleanly.
     new_trains = find_new_trains(watch, trains, notified, renotify=opts.renotify)
-    if not new_trains:
+    # Notification dedup must not disable later reservation retries.
+    reserve_candidates = find_new_trains(watch, trains, set(), renotify=True) if (
+        watch.auto_reserve and not state_mod.is_auto_reserve_disabled(state, watch.id)
+    ) else []
+    if not new_trains and not reserve_candidates:
         log.info("[%s] watch %s: no new seats (%d searched)", provider.name, _wid(watch.id), len(trains))
         return 0
-
-    log.info("[%s] watch %s: %d seat(s)%s", provider.name, _wid(watch.id), len(new_trains),
-             " (renotify)" if opts.renotify else " new")
-    try:
-        hooks.notify(watch, new_trains, silent=opts.silent)
-    except TypeError:
-        hooks.notify(watch, new_trains)
-    state_mod.add_notified_ids(state, watch.id, [t.raw_id for t in new_trains])
-
+    if new_trains:
+        log.info("[%s] watch %s: %d seat(s)", provider.name, _wid(watch.id), len(new_trains))
+        try:
+            hooks.notify(watch, new_trains, silent=opts.silent)
+        except TypeError:
+            hooks.notify(watch, new_trains)
+        state_mod.add_notified_ids(state, watch.id, [t.raw_id for t in new_trains])
     reservations.try_auto_reserve(
-        watch, provider, state, new_trains,
+        watch, provider, state, reserve_candidates,
         notify_reserve_success_fn=hooks.reserve_success,
         notify_reserve_failure_fn=hooks.reserve_failure,
         schedule_reminders_fn=hooks.schedule_reminders,

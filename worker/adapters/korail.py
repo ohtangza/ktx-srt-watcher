@@ -69,6 +69,9 @@ class KorailProvider:
         # Naive datetimes are read as KST by pykorail regardless of the
         # machine's timezone, which is exactly what a watch means.
         depart_after = datetime(y, m, d, hh, mm)
+        now_kst = datetime.now(timezone(timedelta(hours=9))).replace(tzinfo=None)
+        if depart_after.date() == now_kst.date() and depart_after < now_kst:
+            depart_after = now_kst
 
         try:
             raws = self._client.trains.search(

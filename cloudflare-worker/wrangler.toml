@@ -38,7 +38,7 @@ compatibility_date = "2026-04-30"
 # GHA minutes are free/unlimited; the watcher's own throttle keeps the
 # actual Korail/SRT poll rate sane (min 10 min, see settings.poll_interval_mode).
 [triggers]
-crons = []
+crons = ["*/3 * * * *", "*/1 * * * *", "0 * * * *", "0 0 * * *", "0 12 * * SUN"]
 
 [[kv_namespaces]]
 binding = "REMINDERS"

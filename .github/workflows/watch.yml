@@ -17,6 +17,10 @@ on:
         type: choice
         options: ['off', 'all', 'telegram', 'pushover']
         default: 'off'
+      verify_schedule:
+        description: 'Read-only timetable validation without logging itinerary'
+        type: boolean
+        default: false
   repository_dispatch:
     types: [cron-tick]                 # CF Worker 정확한 cron
 
@@ -84,7 +88,12 @@ jobs:
           PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           REMINDER_TOKEN: ${{ secrets.REMINDER_TOKEN }}
-        run: .venv/bin/python -m worker.main --test-notify=${{ inputs.test_notify }}
+        run: |
+          if [ "${{ inputs.verify_schedule }}" = "true" ]; then
+            .venv/bin/python -m worker.verify_watch
+          else
+            .venv/bin/python -m worker.main
+          fi --test-notify=${{ inputs.test_notify }}
 
       - name: Run watcher
         # A test run must not also poll: it exists to isolate the alert path.
@@ -101,4 +110,9 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           REMINDER_TOKEN: ${{ secrets.REMINDER_TOKEN }}
-        run: .venv/bin/python -m worker.main
+        run: |
+          if [ "${{ inputs.verify_schedule }}" = "true" ]; then
+            .venv/bin/python -m worker.verify_watch
+          else
+            .venv/bin/python -m worker.main
+          fi

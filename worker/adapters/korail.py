@@ -86,6 +86,10 @@ class KorailProvider:
         result: list[Train] = []
         for r in raws:
             dep_time = _fmt_time(r.dep_time)
+            if watch.allowed_departures and dep_time not in watch.allowed_departures:
+                continue
+            if watch.allowed_train_nos and str(r.train_no) not in watch.allowed_train_nos:
+                continue
             if r.train_type_name not in watch.train_types:
                 continue
             if not (watch.time_min <= dep_time <= watch.time_max):
@@ -191,6 +195,22 @@ class KorailProvider:
                     keys.add(key)
         except Exception as e:
             log.warning("코레일 발권 내역 조회 실패 — 결제 여부 판단 불가: %s", e)
+            return None
+        return keys
+
+
+    def existing_reservation_keys(self) -> set[str] | None:
+        """Paid tickets and live unpaid holds; failure is not evidence of absence."""
+        keys = self.paid_reservation_keys()
+        if keys is None or self._client is None:
+            return None
+        try:
+            for reservation in self._client.reservations.all():
+                key = journey_key(reservation.train.train_no, reservation.train.dep_date)
+                if key:
+                    keys.add(key)
+        except Exception:
+            log.warning("Existing reservations unavailable; auto-reserve must wait")
             return None
         return keys
 

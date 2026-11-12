@@ -17,6 +17,10 @@ on:
         type: choice
         options: ['off', 'all', 'telegram', 'pushover']
         default: 'off'
+      apply_local_patch:
+        description: 'Apply private locally authorized watch settings, no payment'
+        type: boolean
+        default: false
       verify_previous:
         description: 'Read-only preceding timetable validation'
         type: boolean
@@ -98,6 +102,9 @@ jobs:
         # A test run must not also poll: it exists to isolate the alert path.
         if: steps.gate.outputs.poll == 'true' && (github.event_name != 'workflow_dispatch' || inputs.test_notify == 'off')
         env:
+          CLOUDFLARE_API_TOKEN: ${{ inputs.apply_local_patch && secrets.CLOUDFLARE_API_TOKEN || '' }}
+          CF_ACCOUNT_ID: '29641e74f782eeaac08634611edab322'
+          CF_STATE_NAMESPACE: '1a3c494f158d401eb796b5035b197396'
           VERIFY_LOOKBACK_MINUTES: ${{ inputs.verify_previous && '60' || '0' }}
           TZ: Asia/Seoul
           KORAIL_ID: ${{ secrets.KORAIL_ID }}
@@ -111,7 +118,9 @@ jobs:
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           REMINDER_TOKEN: ${{ secrets.REMINDER_TOKEN }}
         run: |
-          if [ "${{ inputs.verify_schedule }}" = "true" ] || [ "${{ inputs.verify_previous }}" = "true" ]; then
+          if [ "${{ inputs.apply_local_patch }}" = "true" ]; then
+            .venv/bin/python -m worker.apply_local_watch_patch
+          elif [ "${{ inputs.verify_schedule }}" = "true" ] || [ "${{ inputs.verify_previous }}" = "true" ]; then
             .venv/bin/python -m worker.verify_watch
           else
             .venv/bin/python -m worker.main

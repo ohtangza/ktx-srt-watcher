@@ -36,6 +36,8 @@ class Watch(BaseModel):
     train_types: list[str]
     passengers: Passengers = Field(default_factory=Passengers)
     seat_class: SeatClass = "general"
+    allowed_departures: list[str] = Field(default_factory=list)
+    allowed_train_nos: list[str] = Field(default_factory=list)
     auto_reserve: bool = False
     active: bool = True
 

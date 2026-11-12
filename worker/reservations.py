@@ -166,6 +166,16 @@ def try_auto_reserve(
     """
     if not watch.auto_reserve or state_mod.is_auto_reserve_disabled(state, watch.id):
         return
+    if watch.allowed_train_nos:
+        lookup = getattr(provider, "existing_reservation_keys", None)
+        existing = lookup() if lookup is not None else None
+        if existing is None:
+            log.warning("Existing reservation check unavailable; skipping new hold")
+            return
+        targets = {journey_key(no, watch.date) for no in watch.allowed_train_nos}
+        if targets & existing:
+            log.info("Existing target ticket or hold found; no duplicate reservation")
+            return
     candidates = new_trains[:MAX_RESERVE_CANDIDATES]
     chosen, reservation, last_err = _reserve_first(watch, provider, candidates, allow_waiting)
     if reservation is not None and chosen is not None:

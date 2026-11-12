@@ -17,7 +17,7 @@ def main():
         matches=[r for r in rows if w.time_min<=_fmt_time(r.dep_time)<=w.time_max]
         accepted=[r for r in matches if r.train_type_name in w.train_types]
         def minutes(t):
-            h,m=_fmt_time(t).split(':'); return int(h)*60+int(m)
+            h,m=(str(t) if ':' in str(t) else _fmt_time(t)).split(':')[:2]; return int(h)*60+int(m)
         eligible=[r for r in rows if r.train_type_name in w.train_types]
         next_offset=min((minutes(r.dep_time)-minutes(w.time_min) for r in eligible),default=None)
         durations=[(minutes(r.arr_time)-minutes(r.dep_time))%1440 for r in accepted]

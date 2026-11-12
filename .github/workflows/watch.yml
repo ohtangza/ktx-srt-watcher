@@ -17,10 +17,6 @@ on:
         type: choice
         options: ['off', 'all', 'telegram', 'pushover']
         default: 'off'
-      align_earliest:
-        description: 'Apply validated one-minute watch extension, no booking'
-        type: boolean
-        default: false
       verify_schedule:
         description: 'Read-only timetable validation without logging itinerary'
         type: boolean
@@ -93,9 +89,7 @@ jobs:
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           REMINDER_TOKEN: ${{ secrets.REMINDER_TOKEN }}
         run: |
-          if [ "${{ inputs.align_earliest }}" = "true" ]; then
-            .venv/bin/python -m worker.align_watch
-          elif [ "${{ inputs.verify_schedule }}" = "true" ]; then
+          if [ "${{ inputs.verify_schedule }}" = "true" ]; then
             .venv/bin/python -m worker.verify_watch
           else
             .venv/bin/python -m worker.main
@@ -105,9 +99,6 @@ jobs:
         # A test run must not also poll: it exists to isolate the alert path.
         if: steps.gate.outputs.poll == 'true' && (github.event_name != 'workflow_dispatch' || inputs.test_notify == 'off')
         env:
-          CLOUDFLARE_API_TOKEN: ${{ inputs.align_earliest && secrets.CLOUDFLARE_API_TOKEN || '' }}
-          CF_ACCOUNT_ID: '29641e74f782eeaac08634611edab322'
-          CF_STATE_NAMESPACE: '1a3c494f158d401eb796b5035b197396'
           TZ: Asia/Seoul
           KORAIL_ID: ${{ secrets.KORAIL_ID }}
           KORAIL_PW: ${{ secrets.KORAIL_PW }}
@@ -120,9 +111,7 @@ jobs:
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           REMINDER_TOKEN: ${{ secrets.REMINDER_TOKEN }}
         run: |
-          if [ "${{ inputs.align_earliest }}" = "true" ]; then
-            .venv/bin/python -m worker.align_watch
-          elif [ "${{ inputs.verify_schedule }}" = "true" ]; then
+          if [ "${{ inputs.verify_schedule }}" = "true" ]; then
             .venv/bin/python -m worker.verify_watch
           else
             .venv/bin/python -m worker.main

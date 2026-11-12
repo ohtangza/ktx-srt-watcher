@@ -17,6 +17,10 @@ on:
         type: choice
         options: ['off', 'all', 'telegram', 'pushover']
         default: 'off'
+      verify_previous:
+        description: 'Read-only preceding timetable validation'
+        type: boolean
+        default: false
       verify_schedule:
         description: 'Read-only timetable validation without logging itinerary'
         type: boolean
@@ -89,7 +93,7 @@ jobs:
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           REMINDER_TOKEN: ${{ secrets.REMINDER_TOKEN }}
         run: |
-          if [ "${{ inputs.verify_schedule }}" = "true" ]; then
+          if [ "${{ inputs.verify_schedule }}" = "true" ] || [ "${{ inputs.verify_previous }}" = "true" ]; then
             .venv/bin/python -m worker.verify_watch
           else
             .venv/bin/python -m worker.main
@@ -99,6 +103,7 @@ jobs:
         # A test run must not also poll: it exists to isolate the alert path.
         if: steps.gate.outputs.poll == 'true' && (github.event_name != 'workflow_dispatch' || inputs.test_notify == 'off')
         env:
+          VERIFY_LOOKBACK_MINUTES: ${{ inputs.verify_previous && '60' || '0' }}
           TZ: Asia/Seoul
           KORAIL_ID: ${{ secrets.KORAIL_ID }}
           KORAIL_PW: ${{ secrets.KORAIL_PW }}
@@ -111,7 +116,7 @@ jobs:
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           REMINDER_TOKEN: ${{ secrets.REMINDER_TOKEN }}
         run: |
-          if [ "${{ inputs.verify_schedule }}" = "true" ]; then
+          if [ "${{ inputs.verify_schedule }}" = "true" ] || [ "${{ inputs.verify_previous }}" = "true" ]; then
             .venv/bin/python -m worker.verify_watch
           else
             .venv/bin/python -m worker.main

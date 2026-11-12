@@ -92,12 +92,7 @@ jobs:
           PUSHOVER_USER: ${{ secrets.PUSHOVER_USER }}
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
           REMINDER_TOKEN: ${{ secrets.REMINDER_TOKEN }}
-        run: |
-          if [ "${{ inputs.verify_schedule }}" = "true" ] || [ "${{ inputs.verify_previous }}" = "true" ]; then
-            .venv/bin/python -m worker.verify_watch
-          else
-            .venv/bin/python -m worker.main
-          fi --test-notify=${{ inputs.test_notify }}
+        run: .venv/bin/python -m worker.main --test-notify=${{ inputs.test_notify }}
 
       - name: Run watcher
         # A test run must not also poll: it exists to isolate the alert path.
